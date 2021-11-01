@@ -1,2 +1,2 @@
-# quadruped-simulation
+# Quadruped-Simulation
 Quadruped simulation using PyBullet
