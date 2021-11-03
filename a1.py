@@ -18,13 +18,11 @@ p.createMultiBody(0, 0)
 
 colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=[0.08, 0.08, 0.05]) 
 
-mass = 15
+mass = 20
 visualShapeId = -1
 
-basePosition = [0.03,0,1]
+basePosition = [0.05,0,1]
 baseOrientation = [0,0,0,1]
-boxUid = p.createMultiBody(mass, colBoxId, visualShapeId, basePosition, baseOrientation)
-
 
 p.setRealTimeSimulation(0)
 timeStep = 0.001
@@ -43,7 +41,10 @@ lower_legs = [2,5,8,11]
 jointIds=[]
 paramIds=[]
 
-maxForceId = p.addUserDebugParameter("maxForce",0,100,20)
+maxForceId = p.addUserDebugParameter("maxForce",0,100,10.)
+massId = p.addUserDebugParameter("mass",0.1,100,10)
+mass_c = p.readUserDebugParameter(massId)
+boxUid = p.createMultiBody(mass_c, colBoxId, visualShapeId, basePosition, baseOrientation)
 
 for j in range (p.getNumJoints(quadruped)):
     p.changeDynamics(quadruped,j,linearDamping=0, angularDamping=0)
@@ -69,23 +70,10 @@ hipsAndThighs = [2,3,6,7,10,11,14,15]
 joints = [0.033172, 0.662264, -1.258133, -0.030680,0.624135, -1.258133,0.041513, 0.678391, -1.258133,-0.051197, 0.645650,-1.258133]
 
 while(1):
-    # with open("/home/chaman/a1/unitree_pybullet/mocap.txt","r") as filestream: # "mocap.txt"
-    #   for line in filestream:
-    #       maxForce = p.readUserDebugParameter(maxForceId)
-    #       currentline = line.split(",")
-          
-    #       frame = currentline[0]
-    #       t = currentline[1]
-    #       joints = currentline[2:14] #np.array([0,0,0,0,0,0,0,0,0,0,0,-2])
-    #       test_angles.append([0.033172, 0.662264, -1.258133, -0.030680,0.624135, -1.258133,0.041513, 0.678391, -1.258133,-0.051197, 0.645650,-1.258133])
-    #       for j in range (12):
-    #           targetPos = float(joints[j])
-    #           targetVel = 0.5
-    #           p.setJointMotorControl2(quadruped, jointIndex=jointIds[j], controlMode=p.POSITION_CONTROL, targetPosition=targetPos, force=maxForce)
-    #       p.stepSimulation()
-    #       time.sleep(1/500.)
-
     maxForce = p.readUserDebugParameter(maxForceId)
+    mass_c = p.readUserDebugParameter(massId)
+
+    p.changeDynamics(boxUid, linkIndex=-1, mass=mass_c, lateralFriction=0.7)    
 
     quadPos, quadOrn = p.getBasePositionAndOrientation(quadruped)
                                
@@ -94,38 +82,51 @@ while(1):
           targetPos = float(joints[j])
           p.setJointMotorControl2(quadruped, jointIndex=jointIds[j], controlMode=p.POSITION_CONTROL, targetPosition=targetPos, force=maxForce)
 
-    p.setJointMotorControl2(quadruped, 
-                            jointIndex=4, 
-                            controlMode=p.PD_CONTROL, 
-                            targetPosition=-1.258133, 
-                            targetVelocity=0,
-                            # positionGain=timeStep * (Kp / 10.),
-                            # velocityGain=Kd, 
-                            force=maxForce)
-    p.setJointMotorControl2(quadruped, 
-                            jointIndex=8, 
-                            controlMode=p.PD_CONTROL, 
-                            targetPosition=-1.258133, 
-                            targetVelocity=0,
-                            # positionGain=timeStep * (Kp / 10.),
-                            # velocityGain=Kd, 
-                            force=maxForce)
-    p.setJointMotorControl2(quadruped, 
-                            jointIndex=12, 
-                            controlMode=p.PD_CONTROL, 
-                            targetPosition=-1.258133, 
-                            targetVelocity=0,
-                            # positionGain=timeStep * (Kp / 10.),
-                            # velocityGain=Kd, 
-                            force=maxForce)    
-    p.setJointMotorControl2(quadruped, 
-                            jointIndex=16, 
-                            controlMode=p.PD_CONTROL, 
-                            targetPosition=-1.258133, 
-                            targetVelocity=0,
-                            # positionGain=timeStep * (Kp / 10.),
-                            # velocityGain=Kd, 
-                            force=maxForce)
+    for j in range(4):
+        p.setJointMotorControl2(quadruped, 
+                                jointIndex=calfs[j], 
+                                controlMode=p.TORQUE_CONTROL, 
+                                targetPosition=-1.258133, 
+                                targetVelocity=0,
+                                positionGain=timeStep * (Kp / 10.),
+                                velocityGain=Kd, 
+                                force=maxForce)
+
+
+
+    # p.setJointMotorControl2(quadruped, 
+    #                         jointIndex=4, 
+    #                         controlMode=p.TORQUE_CONTROL, 
+    #                         targetPosition=-1.258133, 
+    #                         targetVelocity=0,
+    #                         positionGain=timeStep * (Kp / 10.),
+    #                         velocityGain=Kd, 
+    #                         force=maxForce)
+    # p.setJointMotorControl2(quadruped, 
+    #                         jointIndex=8, 
+    #                         controlMode=p.TORQUE_CONTROL, 
+    #                         targetPosition=-1.258133, 
+    #                         targetVelocity=0,
+    #                         positionGain=timeStep * (Kp / 10.),
+    #                         velocityGain=Kd, 
+    #                         force=maxForce)
+    # p.setJointMotorControl2(quadruped, 
+    #                         jointIndex=12, 
+    #                         controlMode=p.TORQUE_CONTROL, 
+    #                         targetPosition=-1.258133, 
+    #                         targetVelocity=0,
+    #                         positionGain=timeStep * (Kp / 10.),
+    #                         velocityGain=Kd, 
+    #                         force=maxForce)    
+    # p.setJointMotorControl2(quadruped, 
+    #                         jointIndex=16, 
+    #                         controlMode=p.TORQUE_CONTROL, 
+    #                         targetPosition=-1.258133, 
+    #                         targetVelocity=0,
+    #                         positionGain=timeStep * (Kp / 10.),
+    #                         velocityGain=Kd, 
+    #                         force=maxForce)
+
             # # for i in range(len(test_angles)):    
             # #     for j in range (12):
             # #         targetPos = float(joints[i][j])
@@ -137,22 +138,3 @@ while(1):
     time.sleep(timeStep)
 
 p.disconnect()
-
-# # for j in range (p.getNumJoints(quadruped)):
-# #     p.changeDynamics(quadruped,j,linearDamping=0, angularDamping=0)
-# #     info = p.getJointInfo(quadruped,j)
-# #     js = p.getJointState(quadruped,j)
-# #     #print(info)
-# #     jointName = info[1]
-# #     jointType = info[2]
-# #     if (jointType==p.JOINT_PRISMATIC or jointType==p.JOINT_REVOLUTE):
-# #             paramIds.append(p.addUserDebugParameter(jointName.decode("utf-8"),-4,4,(js[0]-jointOffsets[j])/jointDirections[j]))
-
-# # p.setRealTimeSimulation(1)
-
-# # while (1):
-# #     for i in range(len(paramIds)):
-# #         c = paramIds[i]
-# #         targetPos = p.readUserDebugParameter(c)
-# #         maxForce = p.readUserDebugParameter(maxForceId)
-# #         p.setJointMotorControl2(quadruped,jointIds[i],p.POSITION_CONTROL,jointDirections[i]*targetPos+jointOffsets[i], force=maxForce)
